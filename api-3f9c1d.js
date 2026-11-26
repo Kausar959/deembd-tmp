@@ -722,31 +722,31 @@ var qn = O((oo, Gn) => {
 // src/admin.js
 var xn = O((je) => {
   "use strict";
-  var { onCall: ht } = ne(), { onDocumentCreated: Gr } = qn(), I = ae(), { db: pe, admin: Ne, FieldValue: qr, HttpsError: jn, REGION: Ze } = I;
+  var { onCall: ht } = ne(), { onDocumentCreated: Gr } = qn(), _ = ae(), { db: pe, admin: Ne, FieldValue: qr, HttpsError: jn, REGION: Ze } = _;
   je.adminAdjustBalance = ht({ region: Ze }, async (e) => {
-    let t = I.requireRole(e, ["super", "finance"]), n = e.data || {}, a = I.str(n.uid, { max: 128 }), r = I.str(n.bucket, { max: 20 });
-    if (!I.BUCKETS.includes(r)) throw I.bad("Invalid wallet.");
-    let s = I.amountOf(Math.abs(Number(n.delta)), { min: 0.01, max: 1e7, label: "Amount" }) * (Number(n.delta) < 0 ? -1 : 1), o = I.str(n.reason, { min: 3, max: 200, label: "Reason" });
+    let t = _.requireRole(e, ["super", "finance"]), n = e.data || {}, a = _.str(n.uid, { max: 128 }), r = _.str(n.bucket, { max: 20 });
+    if (!_.BUCKETS.includes(r)) throw _.bad("Invalid wallet.");
+    let s = _.amountOf(Math.abs(Number(n.delta)), { min: 0.01, max: 1e7, label: "Amount" }) * (Number(n.delta) < 0 ? -1 : 1), o = _.str(n.reason, { min: 3, max: 200, label: "Reason" });
     return await pe.runTransaction(async (i) => {
       let d = pe.doc(`users/${a}`), c = await i.get(d);
       if (!c.exists) throw new jn("not-found", "User not found.");
-      if (I.round2((c.data().balances?.[r] || 0) + s) < 0) throw I.bad("Balance cannot go below zero.");
-      I.applyDelta(i, d, { [r]: s }), I.ledger(i, { uid: a, type: "admin_adjust", direction: s > 0 ? "in" : "out", amount: Math.abs(s), bucket: r, note: o }), I.notify(i, a, "Balance updated", `${s > 0 ? "+" : ""}${s} (${o})`, "info"), I.audit(i, t, "balance_adjust", { uid: a, bucket: r, delta: s, reason: o });
+      if (_.round2((c.data().balances?.[r] || 0) + s) < 0) throw _.bad("Balance cannot go below zero.");
+      _.applyDelta(i, d, { [r]: s }), _.ledger(i, { uid: a, type: "admin_adjust", direction: s > 0 ? "in" : "out", amount: Math.abs(s), bucket: r, note: o }), _.notify(i, a, "Balance updated", `${s > 0 ? "+" : ""}${s} (${o})`, "info"), _.audit(i, t, "balance_adjust", { uid: a, bucket: r, delta: s, reason: o });
     }), { ok: !0 };
   });
   je.setUserStatus = ht({ region: Ze }, async (e) => {
-    let t = I.requireRole(e, ["super", "support"]), n = e.data || {}, a = I.str(n.uid, { max: 128 }), r = n.banned === !0, s = typeof n.reason == "string" ? n.reason.trim().slice(0, 200) : "";
+    let t = _.requireRole(e, ["super", "support"]), n = e.data || {}, a = _.str(n.uid, { max: 128 }), r = n.banned === !0, s = typeof n.reason == "string" ? n.reason.trim().slice(0, 200) : "";
     if ((await Ne.auth().getUser(a)).customClaims?.admin) throw new jn("permission-denied", "Staff accounts cannot be banned here.");
-    return await pe.doc(`users/${a}`).update({ status: r ? "banned" : "active", banReason: r ? s : "" }), await Ne.auth().updateUser(a, { disabled: r }), r && await Ne.auth().revokeRefreshTokens(a), I.audit(null, t, r ? "user_banned" : "user_unbanned", { uid: a, reason: s }), { ok: !0 };
+    return await pe.doc(`users/${a}`).update({ status: r ? "banned" : "active", banReason: r ? s : "" }), await Ne.auth().updateUser(a, { disabled: r }), r && await Ne.auth().revokeRefreshTokens(a), _.audit(null, t, r ? "user_banned" : "user_unbanned", { uid: a, reason: s }), { ok: !0 };
   });
   je.setStaffRole = ht({ region: Ze }, async (e) => {
-    let t = I.requireRole(e, ["super"]), n = e.data || {}, a = await Ne.auth().getUserByEmail(I.str(n.email, { max: 200, label: "Email" })), r = n.role === null ? null : I.str(n.role, { max: 20 });
-    if (r && !I.STAFF_ROLES.includes(r)) throw I.bad("Invalid role.");
-    if (a.uid === t && r !== "super") throw I.bad("You cannot demote yourself.");
-    return await Ne.auth().setCustomUserClaims(a.uid, r ? { admin: !0, role: r } : { admin: !1, role: null }), await Ne.auth().revokeRefreshTokens(a.uid), await pe.doc(`users/${a.uid}`).set({ role: r || "user" }, { merge: !0 }), I.audit(null, t, "staff_role", { uid: a.uid, role: r }), { ok: !0 };
+    let t = _.requireRole(e, ["super"]), n = e.data || {}, a = await Ne.auth().getUserByEmail(_.str(n.email, { max: 200, label: "Email" })), r = n.role === null ? null : _.str(n.role, { max: 20 });
+    if (r && !_.STAFF_ROLES.includes(r)) throw _.bad("Invalid role.");
+    if (a.uid === t && r !== "super") throw _.bad("You cannot demote yourself.");
+    return await Ne.auth().setCustomUserClaims(a.uid, r ? { admin: !0, role: r } : { admin: !1, role: null }), await Ne.auth().revokeRefreshTokens(a.uid), await pe.doc(`users/${a.uid}`).set({ role: r || "user" }, { merge: !0 }), _.audit(null, t, "staff_role", { uid: a.uid, role: r }), { ok: !0 };
   });
   je.adminNotify = ht({ region: Ze, timeoutSeconds: 300 }, async (e) => {
-    let t = I.requireRole(e, ["super", "support"]), n = e.data || {}, a = I.str(n.title, { max: 80, label: "Title" }), r = I.str(n.body, { max: 400, label: "Message" }), s = (i) => ({ ref: pe.collection("users").doc(i).collection("notifications").doc(), data: { title: a, body: r, type: "announcement", read: !1, createdAt: qr.serverTimestamp() } }), o = 0;
+    let t = _.requireRole(e, ["super", "support"]), n = e.data || {}, a = _.str(n.title, { max: 80, label: "Title" }), r = _.str(n.body, { max: 400, label: "Message" }), s = (i) => ({ ref: pe.collection("users").doc(i).collection("notifications").doc(), data: { title: a, body: r, type: "announcement", read: !1, createdAt: qr.serverTimestamp() } }), o = 0;
     if (n.uid) {
       let i = s(String(n.uid));
       await i.ref.set(i.data), o = 1;
@@ -764,7 +764,7 @@ var xn = O((je) => {
         }), await u.commit(), o += c.size, i = c.docs[c.docs.length - 1];
       }
     }
-    return I.audit(null, t, "notify", { title: a, recipients: o }), { ok: !0, recipients: o };
+    return _.audit(null, t, "notify", { title: a, recipients: o }), { ok: !0, recipients: o };
   });
   je.pushOnNotification = Gr({ document: "users/{uid}/notifications/{nid}", region: Ze }, async (e) => {
     let t = e.data?.data();
@@ -1244,43 +1244,48 @@ var tn = O((wo, fa) => {
 // src/ag/engine.js
 var Ia = O((yo, ka) => {
   "use strict";
-  var tt = me("crypto"), { AgError: _ } = He(), D = (e) => Math.round((Number(e) + Number.EPSILON) * 100) / 100, nt = (e) => D(Math.max(0, e)).toFixed(2), ws = /^[A-Za-z0-9_\-.]{1,128}$/, ga = 10;
+  var tt = me("crypto"), { AgError: I } = He(), D = (e) => Math.round((Number(e) + Number.EPSILON) * 100) / 100, nt = (e) => D(Math.max(0, e)).toFixed(2), ws = /^[A-Za-z0-9_\-.]{1,128}$/, ga = 10;
   function F(e, t, n = 128) {
     let a = e[t];
-    if (a == null || String(a).trim() === "") throw new _(t === "playerId" ? "G20001" : "C10002", `${t} is required`);
+    if (a == null || String(a).trim() === "") throw new I(t === "playerId" ? "G20001" : "C10002", `${t} is required`);
     let r = String(a).trim();
-    if (r.length > n) throw new _("C10002", `${t} too long`);
+    if (r.length > n) throw new I("C10002", `${t} too long`);
     return r;
   }
   function Ct(e, t) {
     let n = e[t];
-    if (n == null || n === "") throw new _("C10002", `${t} is required`);
-    if (typeof n != "number" && !/^\d+(\.\d+)?$/.test(String(n).trim())) throw new _("C10002", `${t} must be a non-negative decimal`);
+    if (n == null || n === "") throw new I("C10002", `${t} is required`);
+    if (typeof n != "number" && !/^\d+(\.\d+)?$/.test(String(n).trim())) throw new I("C10002", `${t} must be a non-negative decimal`);
     let a = Number(n);
-    if (!Number.isFinite(a) || a < 0 || a > 1e12) throw new _("C10002", `${t} out of range`);
+    if (!Number.isFinite(a) || a < 0 || a > 1e12) throw new I("C10002", `${t} out of range`);
     return D(a);
   }
-  function pa(e, t) {
-    let n = e[t];
-    if (n === !0 || n === "true" || n === 1 || n === "1") return !0;
-    if (n === !1 || n === "false" || n === 0 || n === "0") return !1;
-    throw new _("C10002", `${t} must be boolean`);
+  function pa(e, t, n) {
+    let a = e[t];
+    if (a == null || a === "") {
+      if (n !== void 0) return n;
+      throw new I("C10002", `${t} is required`);
+    }
+    let r = String(a).trim().toLowerCase();
+    if (a === !0 || a === 1 || ["true", "1", "y", "yes"].includes(r)) return !0;
+    if (a === !1 || a === 0 || ["false", "0", "n", "no"].includes(r)) return !1;
+    throw new I("C10002", `${t} must be boolean (got ${typeof a}: ${JSON.stringify(a).slice(0, 40)})`);
   }
   function ha(e, t) {
     let n = e[t];
-    if (n == null || n === "") throw new _("C10002", `${t} is required`);
+    if (n == null || n === "") throw new I("C10002", `${t} is required`);
     let a = Number(n);
-    if (!Number.isFinite(a) || a < 0) throw new _("C10002", `${t} must be a Unix ms timestamp`);
+    if (!Number.isFinite(a) || a < 0) throw new I("C10002", `${t} must be a Unix ms timestamp`);
     return a;
   }
   function at(e) {
     let t = F(e, "playerId");
-    if (!ws.test(t)) throw new _("G20006", "playerId has an invalid format");
+    if (!ws.test(t)) throw new I("G20006", "playerId has an invalid format");
     return t;
   }
   function rt(e, t) {
     let n = F(e, "currencyCode", 16);
-    if (t.currencyCode && n !== t.currencyCode) throw new _("G20005", `wallet currency is ${t.currencyCode}, got ${n}`);
+    if (t.currencyCode && n !== t.currencyCode) throw new I("G20005", `wallet currency is ${t.currencyCode}, got ${n}`);
     return n;
   }
   function Ee(e) {
@@ -1332,10 +1337,10 @@ var Ia = O((yo, ka) => {
     return "MB" + tt.createHash("sha1").update(String(e) + tt.randomBytes(4).toString("hex")).digest("hex").slice(0, 18).toUpperCase();
   }
   function ba(e, t, n) {
-    if (e.status !== "active") throw new _("G30001", `account is ${e.status}`);
+    if (e.status !== "active") throw new I("G30001", `account is ${e.status}`);
     let a = e.rg?.excludedUntil;
-    if ((a?.toMillis ? a.toMillis() : Number(a) || 0) > n) throw new _("G30001", "player is self-excluded");
-    if (t && t.status === "forced") throw new _("G30001", "session was force-logged-out");
+    if ((a?.toMillis ? a.toMillis() : Number(a) || 0) > n) throw new I("G30001", "player is self-excluded");
+    if (t && t.status === "forced") throw new I("G30001", "session was force-logged-out");
   }
   async function rn(e, t, n, a, r) {
     let { db: s, FieldValue: o } = e, i = wa(n);
@@ -1343,7 +1348,7 @@ var Ia = O((yo, ka) => {
       let c = s.doc(`agTransactions/${t}`), u = await d.get(c);
       if (u.exists) {
         let p = u.data();
-        if (p.requestHash !== i) throw new _("G300016", `transactionId already used with a different payload (${t})`);
+        if (p.requestHash !== i) throw new I("G300016", `transactionId already used with a different payload (${t})`);
         return { data: p.response, replay: !0 };
       }
       let { data: l, record: m } = await r(d);
@@ -1354,14 +1359,14 @@ var Ia = O((yo, ka) => {
     let n = at(t);
     rt(t, e.cfg);
     let a = await e.db.doc(`users/${n}`).get();
-    if (!a.exists) throw new _("G20006", n);
+    if (!a.exists) throw new I("G20006", n);
     return { balance: nt(ve(a.data().balances)) };
   }
   async function Aa(e, t) {
     let n = at(t);
     rt(t, e.cfg);
     let a = await e.db.doc(`users/${n}`).get();
-    if (!a.exists) throw new _("G20006", n);
+    if (!a.exists) throw new I("G20006", n);
     let r = a.data(), s = String(e.cfg.siteUrl || "").replace(/\/+$/, ""), o = /^https:\/\//.test(r.photoURL || "") ? r.photoURL : e.cfg.defaultAvatarUrl || (s ? `${s}/icons/icon-192.png` : "");
     return { nickName: String(r.username || r.name || "Player").slice(0, 32), avatarUrl: o };
   }
@@ -1369,14 +1374,14 @@ var Ia = O((yo, ka) => {
     let n = at(t), a = rt(t, e.cfg), r = F(t, "gameCode"), s = F(t, "roundId"), o = F(t, "betId"), i = F(t, "transactionId"), d = Ct(t, "betAmount"), c = F(t, "timestamp", 40), { db: u } = e;
     return rn(e, `bet_${Ee(i)}`, t, { kind: "bet", transactionId: i, betId: o, roundId: s, gameCode: r, playerId: n, uid: n, currencyCode: a, betAmount: d, providerTime: c }, async (l) => {
       let m = u.doc(`users/${n}`), p = u.doc(`agBets/${Ee(o)}`), f = u.doc(`agSessions/${n}`), [w, T, g] = await Promise.all([l.get(m), l.get(p), l.get(f)]);
-      if (!w.exists) throw new _("G20006", n);
+      if (!w.exists) throw new I("G20006", n);
       let $ = w.data();
       ba($, g.exists ? g.data() : null, e.now);
       let A = T.exists ? T.data() : null;
-      if (A && A.status === "cancelled") throw new _("C10002", `bet ${o} was already cancelled`);
-      if (A && A.uid !== n) throw new _("C10002", `bet ${o} belongs to another player`);
+      if (A && A.status === "cancelled") throw new I("C10002", `bet ${o} was already cancelled`);
+      if (A && A.uid !== n) throw new I("C10002", `bet ${o} belongs to another player`);
       let k = nn($.balances, d);
-      if (!k) throw new _("G30003", `needs ${d}, has ${ve($.balances)}`);
+      if (!k) throw new I("G30003", `needs ${d}, has ${ve($.balances)}`);
       let E = an(e, l, m);
       for (let [C, L] of Object.entries(k)) E.delta(C, -L);
       E.ledger(n, "game_bet", "out", d, Object.keys(k)[0] || "main", r, o), E.stat("agBetVolume", d), E.stat("agBetCount", 1);
@@ -1405,18 +1410,18 @@ var Ia = O((yo, ka) => {
     });
   }
   async function va(e, t) {
-    let n = at(t), a = rt(t, e.cfg), r = F(t, "gameCode"), s = F(t, "roundId"), o = F(t, "betId"), i = F(t, "transactionId"), d = Ct(t, "betAmount"), c = Ct(t, "winAmount"), u = pa(t, "isFree"), l = pa(t, "isEnd"), m = ha(t, "betTime"), p = ha(t, "settledTime"), f = F(t, "type", 16);
-    if (!["win", "bet_win"].includes(f)) throw new _("C10002", "type must be win or bet_win");
+    let n = at(t), a = rt(t, e.cfg), r = F(t, "gameCode"), s = F(t, "roundId"), o = F(t, "betId"), i = F(t, "transactionId"), d = Ct(t, "betAmount"), c = Ct(t, "winAmount"), u = pa(t, "isFree", !1), l = pa(t, "isEnd"), m = ha(t, "betTime"), p = ha(t, "settledTime"), f = F(t, "type", 16);
+    if (!["win", "bet_win"].includes(f)) throw new I("C10002", "type must be win or bet_win");
     let { db: w } = e;
     return rn(e, `win_${Ee(i)}`, t, { kind: "win", type: f, transactionId: i, betId: o, roundId: s, gameCode: r, playerId: n, uid: n, currencyCode: a, betAmount: d, winAmount: c, isFree: u, isEnd: l, betTime: m, settledTime: p }, async (T) => {
       let g = w.doc(`users/${n}`), $ = w.doc(`agBets/${Ee(o)}`), A = w.doc(`agSessions/${n}`), [k, E, M] = await Promise.all([T.get(g), T.get($), T.get(A)]);
-      if (!k.exists) throw new _("G20006", n);
+      if (!k.exists) throw new I("G20006", n);
       let B = k.data(), y = E.exists ? E.data() : null;
-      if (y && y.uid !== n) throw new _("C10002", `bet ${o} belongs to another player`);
-      if (y && y.status === "cancelled") throw new _("C10002", `bet ${o} was cancelled`);
+      if (y && y.uid !== n) throw new I("C10002", `bet ${o} belongs to another player`);
+      if (y && y.status === "cancelled") throw new I("C10002", `bet ${o} was cancelled`);
       let C = an(e, T, g), L = {}, ee = f === "bet_win" && !u && d > 0;
       if (ee) {
-        if (ba(B, M.exists ? M.data() : null, e.now), L = nn(B.balances, d), !L) throw new _("G30003", `needs ${d}, has ${ve(B.balances)}`);
+        if (ba(B, M.exists ? M.data() : null, e.now), L = nn(B.balances, d), !L) throw new I("G30003", `needs ${d}, has ${ve(B.balances)}`);
         for (let [De, Ue] of Object.entries(L)) C.delta(De, -Ue);
         C.ledger(n, "game_bet", "out", d, Object.keys(L)[0] || "main", r, o), C.stat("agBetVolume", d), C.stat("agBetCount", 1);
       }
@@ -1451,13 +1456,13 @@ var Ia = O((yo, ka) => {
   }
   async function Ca(e, t) {
     let n = at(t), a = rt(t, e.cfg), r = F(t, "gameCode"), s = F(t, "betId"), o = F(t, "merchantBetId"), i = Ct(t, "betAmount"), d = F(t, "cancelType", 8).toUpperCase(), c = F(t, "transactionId");
-    if (!["BET", "WIN"].includes(d)) throw new _("C10002", "cancelType must be BET or WIN");
+    if (!["BET", "WIN"].includes(d)) throw new I("C10002", "cancelType must be BET or WIN");
     let { db: u } = e;
     return rn(e, `cancel_${Ee(c)}`, t, { kind: "cancel", cancelType: d, transactionId: c, betId: s, gameCode: r, playerId: n, uid: n, currencyCode: a, betAmount: i, merchantBetId: o }, async (l) => {
       let m = u.doc(`users/${n}`), p = u.doc(`agBets/${Ee(s)}`), [f, w] = await Promise.all([l.get(m), l.get(p)]);
-      if (!f.exists) throw new _("G20006", n);
+      if (!f.exists) throw new I("G20006", n);
       let T = f.data(), g = an(e, l, m), $ = w.exists ? w.data() : null;
-      if ($ && $.uid !== n) throw new _("C10002", `bet ${s} belongs to another player`);
+      if ($ && $.uid !== n) throw new I("C10002", `bet ${s} belongs to another player`);
       let A = 0, k = 0, E = "", M = e.FieldValue.serverTimestamp();
       if (!$)
         l.set(p, {
