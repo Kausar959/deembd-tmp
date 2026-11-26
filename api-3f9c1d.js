@@ -137,8 +137,7 @@ var Ye = O((Zs, Tn) => {
       return n;
     }
     async _lockRead(t, n) {
-      await t`select pg_advisory_xact_lock(hashtextextended(${n}, 0))`;
-      let a = await t`select data from public.docs where path = ${n}`;
+      let [, a] = await Promise.all([t`select pg_advisory_xact_lock(hashtextextended(${n}, 0))`, t`select data from public.docs where path = ${n}`]);
       return a.length ? a[0].data : void 0;
     }
     /**
@@ -148,9 +147,10 @@ var Ye = O((Zs, Tn) => {
      */
     async _applyAll(t, n) {
       if (!n.length) return;
-      let a = [...new Set(n.map((i) => i.path))].sort();
-      await t`select pg_advisory_xact_lock(hashtextextended(s.p, 0)) from (select p from unnest(${a}::text[]) as p order by p) s`;
-      let r = await t`select path, data from public.docs where path = any(${a}::text[])`, s = /* @__PURE__ */ new Map();
+      let a = [...new Set(n.map((i) => i.path))].sort(), [, r] = await Promise.all([
+        t`select pg_advisory_xact_lock(hashtextextended(s.p, 0)) from (select p from unnest(${a}::text[]) as p order by p) s`,
+        t`select path, data from public.docs where path = any(${a}::text[])`
+      ]), s = /* @__PURE__ */ new Map();
       for (let i of r) s.set(i.path, i.data);
       for (let i of n) {
         let u = s.get(i.path);
